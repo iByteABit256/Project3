@@ -1,56 +1,3 @@
-# C
-
-def reproducibleResults(seed):
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    random.seed(seed)
-    tf.random.set_seed(seed)
-    np.random.seed(seed)
-
-def create_dataset(X, y, time_steps=1):
-    Xs, ys = [], []
-    for i in range(len(X) - time_steps):
-        v = X.iloc[i:(i + time_steps)].values
-        Xs.append(v)        
-        ys.append(y.iloc[i + time_steps])
-    return np.array(Xs), np.array(ys)
-
-def plot_examples(stock_input, stock_decoded):
-    n = TIME_STEPS
-    plt.figure(figsize=(20, 4))
-    for i, idx in enumerate(list(np.arange(0, test_samples, math.ceil(test_samples/TIME_STEPS)))):
-        # display original
-        ax = plt.subplot(2, n, i + 1)
-        if i == 0:
-            ax.set_ylabel("Input", fontweight=600)
-        else:
-            ax.get_yaxis().set_visible(False)
-        plt.plot(stock_input[idx])
-        ax.get_xaxis().set_visible(False)
-        
-        # display reconstruction
-        ax = plt.subplot(2, n, i + 1 + n)
-        if i == 0:
-            ax.set_ylabel("Output", fontweight=600)
-        else:
-            ax.get_yaxis().set_visible(False)
-        plt.plot(stock_decoded[idx])
-        ax.get_xaxis().set_visible(False)
-         
-def plot_history(history):
-    plt.figure(figsize=(15, 5))
-    ax = plt.subplot(1, 2, 1)
-    plt.plot(history.history["loss"])
-    plt.title("Train loss")
-    ax = plt.subplot(1, 2, 2)
-    plt.plot(history.history["val_loss"])
-    plt.title("Test loss")
-
-TIME_STEPS = 10
-window_length = TIME_STEPS
-encoding_dim = 3
-test_samples = 730
-
-# Commented out IPython magic to ensure Python compatibility.
 import math
 import os
 import random
@@ -71,8 +18,24 @@ from matplotlib import rc
 from pandas.plotting import register_matplotlib_converters
 from sklearn.preprocessing import StandardScaler
 
-# %matplotlib inline
-# %config InlineBackend.figure_format='retina'
+def reproducibleResults(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    tf.random.set_seed(seed)
+    np.random.seed(seed)
+
+def create_dataset(X, y, time_steps=1):
+    Xs, ys = [], []
+    for i in range(len(X) - time_steps):
+        v = X.iloc[i:(i + time_steps)].values
+        Xs.append(v)        
+        ys.append(y.iloc[i + time_steps])
+    return np.array(Xs), np.array(ys)
+
+TIME_STEPS = 10
+window_length = TIME_STEPS
+encoding_dim = 3
+test_samples = 730
 
 register_matplotlib_converters()
 sns.set(style='whitegrid', palette='muted', font_scale=1.5)

@@ -1,18 +1,3 @@
-# B
-
-def create_dataset(X, y, time_steps=1):
-    Xs, ys = [], []
-    for i in range(len(X) - time_steps):
-        v = X.iloc[i:(i + time_steps)].values
-        Xs.append(v)        
-        ys.append(y.iloc[i + time_steps])
-    return np.array(Xs), np.array(ys)
-
-
-TIME_STEPS = 30
-THRESHOLD = 0.65
-
-# Commented out IPython magic to ensure Python compatibility.
 import math
 import getopt, sys
 import numpy as np
@@ -27,8 +12,17 @@ from matplotlib import rc
 from pandas.plotting import register_matplotlib_converters
 from sklearn.preprocessing import StandardScaler
 
-# %matplotlib inline
-# %config InlineBackend.figure_format='retina'
+def create_dataset(X, y, time_steps=1):
+    Xs, ys = [], []
+    for i in range(len(X) - time_steps):
+        v = X.iloc[i:(i + time_steps)].values
+        Xs.append(v)        
+        ys.append(y.iloc[i + time_steps])
+    return np.array(Xs), np.array(ys)
+
+
+TIME_STEPS = 30
+THRESHOLD = 0.65
 
 register_matplotlib_converters()
 sns.set(style='whitegrid', palette='muted', font_scale=1.5)
