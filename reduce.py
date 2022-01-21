@@ -195,8 +195,8 @@ for i in range(len(global_df)):
       validation_data=(X_test, X_test)
   )
 
-  X_complete = np.concatenate((X_train, X_test))
-  decoded_stocks = encoder.predict(X_complete)
+  #X_complete = np.concatenate((X_train, X_test))
+  decoded_stocks = encoder.predict(X_test)
   #decoded_stocks = scaler.inverse_transform(decoded_stocks[:,0].reshape(-1,1))
 
   #plot_results(X_test, decoded_stocks)
@@ -205,14 +205,14 @@ for i in range(len(global_df)):
   print(decoded_stocks.shape)
   print(test[TIME_STEPS:].close.values.reshape(-1,1).shape)
 
-  X_complete_values = scaler.inverse_transform(X_complete[:,0].reshape(-1,1))
+  #X_complete_values = scaler.inverse_transform(X_complete[:,0].reshape(-1,1))
   test_values = scaler.inverse_transform(test[TIME_STEPS:].close.values.reshape(-1,1))
   decoded_values = scaler1.inverse_transform(decoded_stocks[:,0].reshape(-1,1))
 
   plt.figure()
   plt.plot(
-    days[2*TIME_STEPS:],
-    X_complete_values, 
+    test[TIME_STEPS:].index,
+    scaler.inverse_transform(test[TIME_STEPS:].close.values.reshape(-1,1)), 
     label='close price'
   )
 
@@ -220,8 +220,8 @@ for i in range(len(global_df)):
   #print(scaler.inverse_transform(decoded_stocks[:10,0].reshape(-1,1)))
 
   plt.plot(
-    days[2*TIME_STEPS:],
-    decoded_values,
+    test[TIME_STEPS:].index,
+    scaler1.inverse_transform(decoded_stocks[:,0].reshape(-1,1)),
     label='decoded close price'
   )
 
@@ -239,5 +239,5 @@ output_dataset = results.head(dataset_size)
 print(output_dataset.shape)
 output_queryset = results.tail(queryset_size)
 print(output_queryset.shape)
-output_dataset.to_csv(output_dataset_file, index=False, header=False)
-output_queryset.to_csv(output_query_file, index=False, header=False)
+output_dataset.to_csv(output_dataset_file, index=False, header=False, sep='\t')
+output_queryset.to_csv(output_query_file, index=False, header=False, sep='\t')
