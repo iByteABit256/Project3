@@ -59,6 +59,7 @@ import tensorflow as tf
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import getopt, sys
 from IPython.display import display
 from tensorflow import keras
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, UpSampling1D, BatchNormalization, LSTM, RepeatVector
@@ -82,7 +83,45 @@ RANDOM_SEED = 113
 
 reproducibleResults(RANDOM_SEED)
 
-df = pd.read_csv("test.csv", sep = "\t", header = None, index_col = 0)
+dataset = ""
+queryset = ""
+output_dataset_file = ""
+output_query_file = ""
+
+# Command line arguments
+
+argList = sys.argv[1:]
+options = "d:q:D:Q:"
+
+if(len(argList) != 8):
+    sys.exit("Input Error\nUsage: -d [dataset] -q [queryset] -D [output dataset file] -Q [output queryfile file]")
+
+try:
+    arguments, values = getopt.getopt(argList, options)
+
+    for currArg, currVal in arguments:
+        if currArg in ("-d"):
+            dataset = currVal
+        elif currArg in ("-q"):
+            queryset = currVal
+        elif currArg in ("-D"):
+            output_dataset_file = currVal
+        elif currArg in ("-Q"):
+            output_query_file = currVal
+        elif currArg in ("-h"):
+            print("Usage: -d [dataset] -q [queryset] -D [output dataset file] -Q [output queryfile file]")
+
+except getopt.error as err:
+    sys.exit(str(err))
+
+
+df = pd.read_csv(dataset, sep = "\t", header = None, index_col = 0)
+dataset_size = len(df)
+
+df_q = pd.read_csv(queryset, sep = "\t", header = None, index_col = 0)
+queryset_size = len(df_q)
+
+df = df.append(df_q)
 
 #stock = input('Input stock symbol\n')
 
@@ -114,6 +153,7 @@ autoencoder.summary()
 autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
 
 global_df = df
+results = pd.DataFrame(columns=range(df.shape[0]-2*TIME_STEPS))
 
 for i in range(len(global_df)):
 
@@ -155,7 +195,8 @@ for i in range(len(global_df)):
       validation_data=(X_test, X_test)
   )
 
-  decoded_stocks = encoder.predict(X_test)
+  X_complete = np.concatenate((X_train, X_test))
+  decoded_stocks = encoder.predict(X_complete)
   #decoded_stocks = scaler.inverse_transform(decoded_stocks[:,0].reshape(-1,1))
 
   #plot_results(X_test, decoded_stocks)
@@ -164,10 +205,14 @@ for i in range(len(global_df)):
   print(decoded_stocks.shape)
   print(test[TIME_STEPS:].close.values.reshape(-1,1).shape)
 
+  X_complete_values = scaler.inverse_transform(X_complete[:,0].reshape(-1,1))
+  test_values = scaler.inverse_transform(test[TIME_STEPS:].close.values.reshape(-1,1))
+  decoded_values = scaler1.inverse_transform(decoded_stocks[:,0].reshape(-1,1))
+
   plt.figure()
   plt.plot(
-    test[TIME_STEPS:].index, 
-    scaler.inverse_transform(test[TIME_STEPS:].close.values.reshape(-1,1)), 
+    days[2*TIME_STEPS:],
+    X_complete_values, 
     label='close price'
   )
 
@@ -175,9 +220,9 @@ for i in range(len(global_df)):
   #print(scaler.inverse_transform(decoded_stocks[:10,0].reshape(-1,1)))
 
   plt.plot(
-    test[TIME_STEPS:].index,
-    scaler1.inverse_transform(decoded_stocks[:,0].reshape(-1,1)), 
-    label='close price'
+    days[2*TIME_STEPS:],
+    decoded_values,
+    label='decoded close price'
   )
 
   #plot_examples(X_test, decoded_stocks)
@@ -185,3 +230,14 @@ for i in range(len(global_df)):
   plt.xticks(rotation=25)
   plt.legend()
   plt.savefig("reduce"+str(i)+".png")
+  print(decoded_values[:10].flatten())
+  print(decoded_values.shape)
+  results = results.append(pd.DataFrame(decoded_values.reshape(1,-1), columns=range(len(decoded_values))), ignore_index=True)
+
+print(results.shape)
+output_dataset = results.head(dataset_size)
+print(output_dataset.shape)
+output_queryset = results.tail(queryset_size)
+print(output_queryset.shape)
+output_dataset.to_csv(output_dataset_file, index=False, header=False)
+output_queryset.to_csv(output_query_file, index=False, header=False)
