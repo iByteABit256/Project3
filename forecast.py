@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import keras
 import pandas as pd
 import numpy as np
+import getopt, sys
 from IPython.display import display
 from keras.models import Sequential
 from keras.layers import Dense
@@ -28,7 +29,33 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping
 
-df = pd.read_csv("test.csv", sep = "\t", header = None, index_col = 0)
+dataset = ""
+input_n = -1
+
+# Command line arguments
+
+argList = sys.argv[1:]
+options = "d:n:"
+
+if(len(argList) != 4):
+    sys.exit("Input Error\nUsage: -d [dataset] -n [number of lines used]")
+
+try:
+    arguments, values = getopt.getopt(argList, options)
+
+    for currArg, currVal in arguments:
+        if currArg in ("-d"):
+            dataset = currVal
+        elif currArg in ("-n"):
+            input_n = int(currVal)
+        elif currArg in ("-h"):
+            print("Usage: -d [dataset] -n [number of lines used]")
+
+except getopt.error as err:
+    sys.exit(str(err))
+
+
+df = pd.read_csv(dataset, sep = "\t", header = None, index_col = 0)
 
 model = Sequential()#Adding the first LSTM layer and some Dropout regularisation
 
@@ -51,80 +78,79 @@ model.compile(optimizer = 'adam', loss = 'mean_squared_error')
 
 global_df = df
 
-for i in range(len(global_df)):
+for i in range(input_n):
 
-  close = global_df.iloc[i]
+    close = global_df.iloc[i]
 
-  days = pd.date_range(start='1/5/2007', end ='1/1/2017')
-  df = pd.DataFrame({'close': close.values}, index = days)
+    days = pd.date_range(start='1/5/2007', end ='1/1/2017')
+    df = pd.DataFrame({'close': close.values}, index = days)
 
-  display(df)
+    display(df)
 
-  print("Number of rows and columns:", df.shape)
+    print("Number of rows and columns:", df.shape)
 
-  split_ind = math.floor(0.8*df.shape[0])
-  training_set = df.iloc[:split_ind]
-  test_set = df.iloc[split_ind:]
+    split_ind = math.floor(0.8*df.shape[0])
+    training_set = df.iloc[:split_ind]
+    test_set = df.iloc[split_ind:]
 
-  print(training_set.shape)
-  print(test_set.shape)
+    print(training_set.shape)
+    print(test_set.shape)
 
-  # Feature Scaling
-  sc = MinMaxScaler(feature_range = (0, 1))
-  training_set_scaled = sc.fit_transform(training_set)
+    # Feature Scaling
+    sc = MinMaxScaler(feature_range = (0, 1))
+    training_set_scaled = sc.fit_transform(training_set)
 
-  # Creating a data structure with 60 time-steps and 1 output
-  X_train = []
-  y_train = []
-  for j in range(TIME_STEPS, training_set.shape[0]):
-      X_train.append(training_set_scaled[j-TIME_STEPS:j, 0])
-      y_train.append(training_set_scaled[j, 0])
+    # Creating a data structure with 60 time-steps and 1 output
+    X_train = []
+    y_train = []
+    for j in range(TIME_STEPS, training_set.shape[0]):
+        X_train.append(training_set_scaled[j-TIME_STEPS:j, 0])
+        y_train.append(training_set_scaled[j, 0])
 
-  X_train, y_train = np.array(X_train), np.array(y_train)
+    X_train, y_train = np.array(X_train), np.array(y_train)
 
-  print(X_train.shape)
-  print(y_train.shape)
-  X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-  print(X_train.shape)
-  print(y_train.shape)
+    print(X_train.shape)
+    print(y_train.shape)
+    X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+    print(X_train.shape)
+    print(y_train.shape)
 
-  # Fitting the RNN to the Training set
-  model.fit(X_train, y_train, epochs = 2, batch_size = 1024)
+    # Fitting the RNN to the Training set
+    model.fit(X_train, y_train, epochs = 2, batch_size = 1024)
 
-  # Using the created model
-  dataset_train = df.iloc[:split_ind]
-  dataset_test = df.iloc[split_ind:]
+    # Using the created model
+    dataset_train = df.iloc[:split_ind]
+    dataset_test = df.iloc[split_ind:]
 
-  dataset_total = pd.concat((dataset_train, dataset_test), axis = 0)
-  print(dataset_total.shape)
+    dataset_total = pd.concat((dataset_train, dataset_test), axis = 0)
+    print(dataset_total.shape)
 
-  inputs = dataset_total[len(dataset_total) - len(dataset_test) - TIME_STEPS:].values
-  inputs = inputs.reshape(-1,1)
-  inputs = sc.transform(inputs)
+    inputs = dataset_total[len(dataset_total) - len(dataset_test) - TIME_STEPS:].values
+    inputs = inputs.reshape(-1,1)
+    inputs = sc.transform(inputs)
 
-  print(inputs.shape)
+    print(inputs.shape)
 
-  X_test = []
-  for j in range(TIME_STEPS, inputs.shape[0]):
-      X_test.append(inputs[j-TIME_STEPS:j, 0])
+    X_test = []
+    for j in range(TIME_STEPS, inputs.shape[0]):
+        X_test.append(inputs[j-TIME_STEPS:j, 0])
 
-  X_test = np.array(X_test)
-  X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
-  print(X_test.shape)
+    X_test = np.array(X_test)
+    X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+    print(X_test.shape)
 
-  # Get predictions
-  predicted_stock_price = model.predict(X_test)
-  predicted_stock_price = sc.inverse_transform(predicted_stock_price)
+    # Get predictions
+    predicted_stock_price = model.predict(X_test)
+    predicted_stock_price = sc.inverse_transform(predicted_stock_price)
 
-  print(predicted_stock_price.shape)
+    print(predicted_stock_price.shape)
 
-  # Visualising the results
-  plt.figure(figsize=(15, 5))
-  plt.plot(dataset_test.index, dataset_test['close'], color = 'red', label = 'Real Stock Price')
-  plt.plot(dataset_test.index, predicted_stock_price, color = 'blue', label = 'Predicted Stock Price')
-  plt.title('Stock Price Prediction')
-  plt.xlabel('Time')
-  plt.ylabel('Stock Price')
-  plt.legend()
-  plt.savefig("forecast"+str(i)+".png")
-
+    # Visualising the results
+    plt.figure(figsize=(15, 5))
+    plt.plot(dataset_test.index, dataset_test['close'], color = 'red', label = 'Real Stock Price')
+    plt.plot(dataset_test.index, predicted_stock_price, color = 'blue', label = 'Predicted Stock Price')
+    plt.title('Stock Price Prediction')
+    plt.xlabel('Time')
+    plt.ylabel('Stock Price')
+    plt.legend()
+    plt.savefig("forecast"+str(i)+".png")

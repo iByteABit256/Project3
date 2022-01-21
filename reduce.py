@@ -56,15 +56,16 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from IPython.display import display
 from tensorflow import keras
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, UpSampling1D, BatchNormalization, LSTM, RepeatVector
 from keras.models import Model
 from keras.models import model_from_json
 from keras import regularizers
-import pandas as pd
-import seaborn as sns
 from pylab import rcParams
-import matplotlib.pyplot as plt
 from matplotlib import rc
 from pandas.plotting import register_matplotlib_converters
 from sklearn.preprocessing import StandardScaler
@@ -82,7 +83,6 @@ RANDOM_SEED = 113
 reproducibleResults(RANDOM_SEED)
 
 df = pd.read_csv("test.csv", sep = "\t", header = None, index_col = 0)
-
 
 #stock = input('Input stock symbol\n')
 
@@ -116,6 +116,7 @@ autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
 global_df = df
 
 for i in range(len(global_df)):
+
   close = global_df.iloc[i]
 
   days = pd.date_range(start='1/5/2007', end ='1/1/2017')
@@ -158,7 +159,7 @@ for i in range(len(global_df)):
   #decoded_stocks = scaler.inverse_transform(decoded_stocks[:,0].reshape(-1,1))
 
   #plot_results(X_test, decoded_stocks)
-#print(X_test)
+  #print(X_test)
 
   print(decoded_stocks.shape)
   print(test[TIME_STEPS:].close.values.reshape(-1,1).shape)
@@ -183,5 +184,4 @@ for i in range(len(global_df)):
 
   plt.xticks(rotation=25)
   plt.legend()
-
-plt.show()
+  plt.savefig("reduce"+str(i)+".png")
