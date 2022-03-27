@@ -70,5 +70,7 @@ For best results, we used 15 epochs and 2048 batch size,
 binary crossentropy as a loss function and the standard scaler
 for normalization.
 
-Made by Pavlos Smith and Marios Gkotzai
+
+
+### Made by Pavlos Smith and Marios Gkotzai
 
